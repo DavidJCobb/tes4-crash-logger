@@ -19,6 +19,7 @@ namespace CobbPatches {
          _MESSAGE("%s | %08X", "ecx", info->ContextRecord->Ecx);
          _MESSAGE("%s | %08X", "edx", info->ContextRecord->Edx);
          _MESSAGE("%s | %08X", "edi", info->ContextRecord->Edi);
+         _MESSAGE("%s | %08X", "esi", info->ContextRecord->Esi);
          _MESSAGE("%s | %08X", "ebp", info->ContextRecord->Ebp);
          _MESSAGE("\nVANILLA CALL STACK at %08X:", info->ContextRecord->Esp);
          {
@@ -74,13 +75,14 @@ namespace CobbPatches {
          }
          {  // Module debug.
             _MESSAGE("\n");
+            constexpr int LOAD_COUNT = 140;
             HANDLE  processHandle = GetCurrentProcess();
-            HMODULE modules[70];
+            HMODULE modules[LOAD_COUNT];
             DWORD   bytesNeeded;
             bool    success = EnumProcessModules(processHandle, modules, sizeof(modules), &bytesNeeded);
-            bool    overflow = success && (bytesNeeded > 70);
+            bool    overflow = success && (bytesNeeded > (LOAD_COUNT * sizeof(HMODULE)));
             if (success) {
-               UInt32 count = (std::min)(bytesNeeded / sizeof(HMODULE), (UInt32)70);
+               UInt32 count = (std::min)(bytesNeeded / sizeof(HMODULE), (UInt32)LOAD_COUNT);
                {  // Identify faulting module.
                   MODULEINFO moduleData;
                   bool       found = false;
