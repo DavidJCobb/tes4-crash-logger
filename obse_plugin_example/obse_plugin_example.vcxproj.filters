@@ -8,11 +8,10 @@
   <ItemGroup>
     <ClCompile Include="dllmain.c" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="shared.cpp" />
     <ClCompile Include="Patches\CrashLog.cpp" />
+    <ClCompile Include="definitions.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="shared.h" />
     <ClInclude Include="..\obse\obse\Commands_ActiveEffect.cpp" />
     <ClInclude Include="..\obse\obse\Commands_Actor.cpp" />
     <ClInclude Include="..\obse\obse\Commands_ActorValue.cpp" />
@@ -108,8 +107,6 @@
     <ClInclude Include="..\obse\obse\Tasks.cpp" />
     <ClInclude Include="..\obse\obse\ThreadLocal.cpp" />
     <ClInclude Include="..\obse\obse\Utilities.cpp" />
-    <ClInclude Include="..\obse\obse\*.cpp" />
-    <ClInclude Include="..\obse\obse\*.cpp" />
     <ClInclude Include="..\obse\obse\*.cpp" />
     <ClInclude Include="..\obse\obse\*.cpp" />
     <ClInclude Include="..\obse\obse\*.cpp" />
@@ -268,8 +265,6 @@
     <ClInclude Include="..\obse\obse\ThreadLocal.h" />
     <ClInclude Include="..\obse\obse\Utilities.h" />
     <ClInclude Include="..\obse\obse\VarMap.h" />
-    <ClInclude Include="..\obse\obse\*.h" />
-    <ClInclude Include="..\obse\obse\*.h" />
     <ClInclude Include="..\obse\obse\*.h" />
     <ClInclude Include="..\obse\obse\*.h" />
     <ClInclude Include="..\obse\obse\*.h" />
@@ -7568,8 +7563,10 @@
     <ClInclude Include="..\obse\obse\Tasks.cpp" />
     <ClInclude Include="..\obse\obse\ThreadLocal.cpp" />
     <ClInclude Include="..\obse\obse\Utilities.cpp" />
+    <ClInclude Include="definitions.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />
+    <None Include="Registered Plugin Function Names.xls" />
   </ItemGroup>
 </Project>

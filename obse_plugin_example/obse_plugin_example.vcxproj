@@ -123,8 +123,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="definitions.cpp" />
     <ClCompile Include="Patches\CrashLog.cpp" />
-    <ClCompile Include="shared.cpp" />
     <ClCompile Include="dllmain.c">
       <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
       </ForcedIncludeFiles>
@@ -134,11 +134,12 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="definitions.h" />
     <ClInclude Include="Patches\CrashLog.h" />
-    <ClInclude Include="shared.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />
+    <None Include="Registered Plugin Function Names.xls" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
