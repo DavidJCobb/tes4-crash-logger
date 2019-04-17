@@ -11,7 +11,17 @@ extern "C" {
       // fill out the info structure
       info->infoVersion = PluginInfo::kInfoVersion;
       info->name        = "CobbCrashLogger";
-      info->version     = 0x00000000; // major, minor, patch, build
+      info->version     = 0x02000000; // major, minor, patch, build
+
+      {  // log our version number -- be helpful!
+         auto v = info->version;
+         UInt8 major = v >> 0x18;
+         UInt8 minor = (v >> 0x10) & 0xFF;
+         UInt8 patch = (v >> 0x08) & 0xFF;
+         UInt8 build = v & 0xFF;
+         _MESSAGE("Cobb Crash Logger Version %d.%d.%d, build %d.", major, minor, patch, build);
+         _MESSAGE("If this file is empty, then your game didn't crash! Probably!\n");
+      }
 
       // version checks
       if(!obse->isEditor) {

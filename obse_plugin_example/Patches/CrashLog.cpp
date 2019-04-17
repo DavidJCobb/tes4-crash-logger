@@ -1,7 +1,45 @@
 #include "CrashLog.h"
+#include "definitions.h"
 #include "obse_common/SafeWrite.h"
 
+constexpr bool   ce_dumpSubroutines = false;
+constexpr UInt32 ce_printStackCount = 50;
+
 namespace CobbPatches {
+   namespace Subroutines {
+      void dump() {
+         if (!ce_dumpSubroutines)
+            return;
+         _MESSAGE("DUMPING SUBROUTINES...\n");
+         for (UInt32 i = 0; i < g_labelCount; i++) {
+            auto&  entry = g_labels[i];
+            if (entry.type != Label::kType_Subroutine)
+               continue;
+            UInt32 count = 0;
+            {
+               UInt32 addr = entry.start;
+               while (*(UInt8*)(addr) != 0xCC)
+                  ++addr;
+               count = addr - entry.start;
+            }
+            _MESSAGE("%08X|%04X|%s", entry.start, count, entry.name);
+         }
+         _MESSAGE("DUMP COMPLETE.\n");
+         //
+         // Regex to string:
+         // ([\dA-F]{8})\|([\dA-F]{4})\|(.+)
+         //    Subroutine\(0x\1, 0x\2, "\3"\),
+         //
+      }
+      const Label* GetLabel(UInt32 addr) {
+         for (UInt32 i = 0; i < g_labelCount; i++) {
+            auto&  entry = g_labels[i];
+            if (addr >= entry.start && addr <= (entry.start + entry.size))
+               return &entry;
+         }
+         return nullptr;
+      }
+   }
    namespace CrashLog {
       static LPTOP_LEVEL_EXCEPTION_FILTER WINAPI s_originalFilter = nullptr;
       //
@@ -12,7 +50,18 @@ namespace CobbPatches {
       void Log(EXCEPTION_POINTERS* info) {
          _MESSAGE("Exception caught!");
          UInt32 eip = info->ContextRecord->Eip;
-         _MESSAGE("Instruction pointer (EIP): %08X", eip);
+         {
+            auto label = Subroutines::GetLabel(eip);
+            if (label) {
+               if (label->type != Label::kType_Subroutine) {
+                  _MESSAGE("Instruction pointer (EIP): %08X (not-a-subroutine:%s)", eip, label->name);
+               } else {
+                  _MESSAGE("Instruction pointer (EIP): %08X (%s+%02X)", eip, label->name, (eip - label->start));
+               }
+            } else {
+               _MESSAGE("Instruction pointer (EIP): %08X", eip);
+            }
+         }
          _MESSAGE("\nREG | VALUE");
          _MESSAGE("%s | %08X", "eax", info->ContextRecord->Eax);
          _MESSAGE("%s | %08X", "ebx", info->ContextRecord->Ebx);
@@ -21,6 +70,24 @@ namespace CobbPatches {
          _MESSAGE("%s | %08X", "edi", info->ContextRecord->Edi);
          _MESSAGE("%s | %08X", "esi", info->ContextRecord->Esi);
          _MESSAGE("%s | %08X", "ebp", info->ContextRecord->Ebp);
+         {  // Print stack
+            _MESSAGE("\nSTACK (esp == %08X):", info->ContextRecord->Esp);
+            UInt32* esp = (UInt32*) info->ContextRecord->Esp;
+            UInt32 i = 0;
+            do {
+               UInt32  p     = esp[i];
+               auto    label = Subroutines::GetLabel(p);
+               if (!label)
+                  _MESSAGE("0x%08X |", p);
+               else {
+                  if (label->type == Label::kType_VTBL)
+                     _MESSAGE("0x%08X | VTBL:%s", p, label->name);
+                  else
+                     _MESSAGE("0x%08X | %s", p, label->name);
+               }
+            } while (++i < ce_printStackCount);
+         }
+         /*// old stack-printing code
          _MESSAGE("\nVANILLA CALL STACK at %08X:", info->ContextRecord->Esp);
          {
             constexpr UInt32 levels = 20;
@@ -73,6 +140,7 @@ namespace CobbPatches {
                _MESSAGE("   FAILED TO PRINT.");
             }
          }
+         //*/
          {  // Module debug.
             _MESSAGE("\n");
             constexpr int LOAD_COUNT = 140;
@@ -119,7 +187,11 @@ namespace CobbPatches {
                   for (UInt32 i = 0; i < count; i++) {
                      TCHAR szModName[MAX_PATH];
                      if (GetModuleFileNameEx(processHandle, modules[i], szModName, sizeof(szModName) / sizeof(TCHAR))) {
-                        _MESSAGE(TEXT(" - 0x%08X: %s"), modules[i], szModName);
+                        MODULEINFO info;
+                        if (GetModuleInformation(GetCurrentProcess(), modules[i], &info, sizeof(info))) {
+                           _MESSAGE(TEXT(" - 0x%08X - 0x%08X: %s"), modules[i], (UInt32)info.lpBaseOfDll + info.SizeOfImage, szModName);
+                        } else
+                           _MESSAGE(TEXT(" - 0x%08X - 0x????????: %s"), modules[i], szModName);
                      }
                   }
                   if (overflow)
@@ -160,6 +232,10 @@ namespace CobbPatches {
          // Prevent Oblivion from disabling the filter:
          //
          SafeWrite32(0x00A281B4, (UInt32)&FakeSetUnhandledExceptionFilter);
+         //
+         // Startup tasks:
+         //
+         Subroutines::dump();
       };
    };
 };
