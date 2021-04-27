@@ -5,9 +5,9 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CobbCrashLogger", "obse_plugin_example.vcxproj", "{A0B4387F-4D59-452A-AF0C-FC5207A55713}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "common", "..\common\common.vcxproj", "{9292D286-5EE5-4F14-B341-72875CB17D61}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "common", "..\OBSE\common\common.vcxproj", "{9292D286-5EE5-4F14-B341-72875CB17D61}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "obse", "..\obse\obse\obse.vcxproj", "{B5635D6F-B412-4F80-845B-1A0D39C5FAAF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "obse", "..\OBSE\obse\obse\obse.vcxproj", "{B5635D6F-B412-4F80-845B-1A0D39C5FAAF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
