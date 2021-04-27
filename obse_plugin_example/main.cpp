@@ -30,8 +30,8 @@ extern "C" {
             return false;
          }
          #if OBLIVION
-            if(obse->oblivionVersion != OBLIVION_VERSION) {
-               _ERROR("incorrect Oblivion version (got %08X; need %08X).", obse->oblivionVersion, OBLIVION_VERSION);
+            if(obse->oblivionVersion != OBLIVION_VERSION_1_2_416) {
+               _ERROR("incorrect Oblivion version (got %08X; need %08X).", obse->oblivionVersion, OBLIVION_VERSION_1_2_416);
                return false;
             }
          #endif
