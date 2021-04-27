@@ -114,6 +114,11 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <Filter Include="OBSE">
+      <UniqueIdentifier>{94aa795e-944e-41af-a0d6-aa5deea207d6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\OBSE\common\common.vcxproj">
       <Project>{9292d286-5ee5-4f14-b341-72875cb17d61}</Project>
       <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
@@ -121,7 +126,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\OBSE\obse\obse_common\SafeWrite.cpp" />
+    <ClCompile Include="..\OBSE\obse\obse_common\SafeWrite.cpp">
+      <Filter>OBSE</Filter>
+    </ClCompile>
     <ClCompile Include="definitions.cpp" />
     <ClCompile Include="Patches\CrashLog.cpp" />
     <ClCompile Include="dllmain.c">
@@ -133,13 +140,14 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\OBSE\obse\obse_common\SafeWrite.h" />
+    <ClInclude Include="..\OBSE\obse\obse_common\SafeWrite.h">
+      <Filter>OBSE</Filter>
+    </ClInclude>
     <ClInclude Include="definitions.h" />
     <ClInclude Include="Patches\CrashLog.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />
-    <None Include="Registered Plugin Function Names.xls" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
