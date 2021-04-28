@@ -25,8 +25,8 @@ extern "C" {
 
       // version checks
       if(!obse->isEditor) {
-         if(obse->obseVersion < OBSE_VERSION_INTEGER && obse->obseVersion < 21) {
-            _ERROR("OBSE version too old (got %08X; expected at least %08X).", obse->obseVersion, OBSE_VERSION_INTEGER);
+         if(obse->obseVersion < 21) {
+            _ERROR("OBSE version too old (got %08X; expected at least %08X).", obse->obseVersion, 21);
             return false;
          }
          #if OBLIVION
