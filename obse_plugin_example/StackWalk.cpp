@@ -37,7 +37,7 @@ void StackWalk(EXCEPTION_POINTERS* info) {
             if (!(symbol->ModBase && GetModuleFileNameA((HINSTANCE)symbol->ModBase, moduleBuff, MAX_PATH))) {
                 strcpy_s(moduleBuff, "No Module");
             }
-            _MESSAGE("0x%08X ==> %s  (%s) (0x%08X) ", frame.AddrPC.Offset, functioName.c_str(), moduleBuff, 0);
+            _MESSAGE("0x%08X ==> %s  (%s) (0x%08X) ", frame.AddrPC.Offset, functioName.c_str(), moduleBuff, frame.AddrFrame.Offset);
 
 //            IMAGEHLP_LINE line = { 0 };
 //            line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
@@ -48,7 +48,7 @@ void StackWalk(EXCEPTION_POINTERS* info) {
 //            }
         }
         else {
-            _MESSAGE("0x%08X ==> ¯\\(°_o)/¯ (Corrupt stack or heap?)", frame.AddrPC.Offset, moduleBuff);
+            _MESSAGE("0x%08X ==> ¯\\(°_o)/¯ (Corrupt stack or heap?)  (0x%08X)", frame.AddrPC.Offset, frame.AddrFrame.Offset);
         }
     }
     SymCleanup(process);
