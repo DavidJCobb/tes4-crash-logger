@@ -19,6 +19,40 @@ namespace CobbPatches {
    namespace CrashLog {
       static LPTOP_LEVEL_EXCEPTION_FILTER s_originalFilter = nullptr;
 
+      struct UserContext {
+          UInt32 eip;
+          UInt32 moduleBase;
+          CHAR* name;
+      };
+
+      BOOL CALLBACK EumerateModulesCallback(PCSTR name, ULONG moduleBase, ULONG moduleSize,  PVOID context) {
+          UserContext* info = (UserContext*)context;
+          if (info->eip >= (UInt32)moduleBase && info->eip <= (UInt32)moduleBase + (UInt32)moduleSize) {
+              //_MESSAGE("%0X %0X  %0X", (UInt32)moduleBase, info->eip, (UInt32)moduleBase + (UInt32) moduleSize);
+              info->moduleBase = moduleBase;
+              UInt32 len = strlen(name);
+              info->name = (char*)calloc(1, len);
+              strcpy_s(info->name, len, name);
+          }
+          _MESSAGE(" - 0x%08X - 0x%08X: %s", (UInt32)moduleBase, (UInt32)moduleBase + (UInt32)moduleSize, name);
+          return TRUE;
+      }
+
+      BOOL CALLBACK EumerateModulesCallbackSym(PCSTR name, ULONG moduleBase, PVOID context) {
+          UserContext* info = (UserContext*)context;
+          IMAGEHLP_MODULE modu;
+          SymGetModuleInfo(GetCurrentProcess(), moduleBase, &modu );
+          if (info->eip >= (UInt32) moduleBase && info->eip <= (UInt32)moduleBase + modu.ImageSize) {
+  //            _MESSAGE("%0X %0X  %0X", (UInt32)moduleBase, info->eip, (UInt32)moduleBase + moduleSize);
+              info->moduleBase = moduleBase;
+              UInt32 len = strlen(name);
+              info->name = (char*)calloc(1, len);
+              strcpy_s(info->name, len,  name);
+          }
+          _MESSAGE(" - 0x%08X - 0x%08X: %s", (UInt32)moduleBase, (UInt32)moduleBase + modu.ImageSize, name);
+          return TRUE;
+      }
+
       void Log(EXCEPTION_POINTERS* info) {
           HANDLE  processHandle = GetCurrentProcess();
           HANDLE  threadHandle = GetCurrentThread();
@@ -40,68 +74,26 @@ namespace CobbPatches {
          for (unsigned int i = 0; i < ce_printStackCount; i+=4) {
              _MESSAGE("0x%08X | 0x%08X | 0x%08X | 0x%08X", esp[i], esp[i+1], esp[i+2], esp[i+3]);
          }
-         _MESSAGE("\n");
-        constexpr int LOAD_COUNT = 140;
-        HMODULE modules[LOAD_COUNT];
-        DWORD   bytesNeeded;
-        bool    success = EnumProcessModules(processHandle, modules, sizeof(modules), &bytesNeeded);
-        bool    overflow = success && (bytesNeeded > (LOAD_COUNT * sizeof(HMODULE)));
-        if (success) {
-            UInt32 count = (std::min)(bytesNeeded / sizeof(HMODULE), (UInt32)LOAD_COUNT);
-            {  // Identify faulting module.
-                MODULEINFO moduleData;
-                bool       found = false;
-                for (UInt32 i = 0; i < count; i++) {
-                    if (GetModuleInformation(processHandle, modules[i], &moduleData, sizeof(moduleData))) {
-                    UInt32 base = (UInt32)moduleData.lpBaseOfDll;
-                    UInt32 end  = base + moduleData.SizeOfImage;
-                    if (eip >= base && eip < end) {
-                        TCHAR szModName[MAX_PATH];
-                        if (GetModuleFileNameEx(processHandle, modules[i], szModName, sizeof(szModName) / sizeof(TCHAR))) {
-                            found = true;
-                            _MESSAGE("GAME CRASHED AT INSTRUCTION Base+0x%08X IN MODULE: %s", (eip - base), szModName);
-                            _MESSAGE("Please note that this does not automatically mean that that module is responsible. \n"
-                                    "It may have been supplied bad data or program state as the result of an issue in \n"
-                                    "the base game or a different DLL.");
-                            break;
-                        }
-                    }
-                    }
-                }
-                if (!found) {
-                    _MESSAGE("UNABLE TO IDENTIFY MODULE CONTAINING THE CRASH ADDRESS.");
-                    _MESSAGE("This can occur if the crashing instruction is located in the vanilla address space, \n"
-                            "but it can also occur if there are too many DLLs for us to list, and if the crash \n"
-                            "occurred in one of their address spaces. Please note that even if the crash occurred \n"
-                            "in vanilla code, that does not necessarily mean that it is a vanilla problem. The \n"
-                            "vanilla code may have been supplied bad data or program state as the result of an \n"
-                            "issue in a loaded DLL.");
-                }
-                _MESSAGE("\n");
-            }
-            _MESSAGE("LISTING MODULE BASES (UNORDERED)...");
-            try {
-                for (UInt32 i = 0; i < count; i++) {
-                    TCHAR szModName[MAX_PATH];
-                    if (GetModuleFileNameEx(processHandle, modules[i], szModName, sizeof(szModName) / sizeof(TCHAR))) {
-                    MODULEINFO info;
-                    if (GetModuleInformation(GetCurrentProcess(), modules[i], &info, sizeof(info))) {
-                        _MESSAGE(TEXT(" - 0x%08X - 0x%08X: %s"), modules[i], (UInt32)info.lpBaseOfDll + info.SizeOfImage, szModName);
-                    } else
-                        _MESSAGE(TEXT(" - 0x%08X - 0x????????: %s"), modules[i], szModName);
-                    }
-                }
-                if (overflow)
-                    _MESSAGE("TOO MANY MODULES TO LIST!");
-                _MESSAGE("END OF LIST.");
-            } catch (...) {
-                _MESSAGE("   FAILED TO PRINT.");
-            }
-            _MESSAGE("\nALL DATA PRINTED.");
-        } else {
-            _MESSAGE("UNABLE TO EXAMINE LOADED DLLs.");
-        }
-         
+         _MESSAGE("\nLISTING MODULE BASES ...");
+         UserContext infoUser = { eip, 0 , NULL};
+         EnumerateLoadedModules(processHandle, EumerateModulesCallback, &infoUser);
+//        SymEnumerateModules(processHandle, EumerateModulesCallbackSym, &infoUser);
+         if (infoUser.moduleBase) {
+             _MESSAGE("\nGAME CRASHED AT INSTRUCTION Base+0x%08X IN MODULE: %s", (infoUser.eip - infoUser.moduleBase), infoUser.name);
+             _MESSAGE("Please note that this does not automatically mean that that module is responsible. \n"
+                 "It may have been supplied bad data or program state as the result of an issue in \n"
+                 "the base game or a different DLL.");
+         }else{
+             _MESSAGE("\nUNABLE TO IDENTIFY MODULE CONTAINING THE CRASH ADDRESS.");
+             _MESSAGE("This can occur if the crashing instruction is located in the vanilla address space, \n"
+                 "but it can also occur if there are too many DLLs for us to list, and if the crash \n"
+                 "occurred in one of their address spaces. Please note that even if the crash occurred \n"
+                 "in vanilla code, that does not necessarily mean that it is a vanilla problem. The \n"
+                 "vanilla code may have been supplied bad data or program state as the result of an \n"
+                 "issue in a loaded DLL.");
+         }
+
+         SymCleanup(processHandle);
       };
       LONG WINAPI Filter(EXCEPTION_POINTERS* info) {
          static bool caught = false;

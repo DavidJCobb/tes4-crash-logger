@@ -53,5 +53,4 @@ void StackWalk(EXCEPTION_POINTERS* info, HANDLE process, HANDLE thread) {
             _MESSAGE("0x%08X ==> ¯\\(°_o)/¯ (Corrupt stack or heap?)  (0x%08X)", frame.AddrPC.Offset, frame.AddrFrame.Offset);
         }
     }
-    SymCleanup(process);
 }
