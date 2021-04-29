@@ -18,26 +18,14 @@ namespace CobbPatches {
    }
    namespace CrashLog {
       static LPTOP_LEVEL_EXCEPTION_FILTER s_originalFilter = nullptr;
-      //
-      bool _AddressIsProbablyVanillaCode(UInt32 a) { // there are better checks but those require walking all loaded modules
-         return (a & 0x00FFFFFF) == a && a > 0x001FFFFF;
-      }
-      //
+
       void Log(EXCEPTION_POINTERS* info) {
-         _MESSAGE("Exception caught!");
-         UInt32 eip = info->ContextRecord->Eip;
-         {
-            auto label = Subroutines::GetLabel(eip);
-            if (label) {
-               if (label->type != Label::kType_Subroutine) {
-                  _MESSAGE("Instruction pointer (EIP): %08X (not-a-subroutine:%s)", eip, label->name);
-               } else {
-                  _MESSAGE("Instruction pointer (EIP): %08X (%s+%02X)", eip, label->name, (eip - label->start));
-               }
-            } else {
-               _MESSAGE("Instruction pointer (EIP): %08X", eip);
-            }
-         }
+          _MESSAGE("Exception %08X caught!", info->ExceptionRecord->ExceptionCode);
+          _MESSAGE("\nCalltrace: ");
+          StackWalk(info);
+
+          UInt32 eip = info->ContextRecord->Eip;
+         _MESSAGE("\nInstruction pointer (EIP): %08X", eip);
          _MESSAGE("\nREG | VALUE");
          _MESSAGE("%s | %08X", "eax", info->ContextRecord->Eax);
          _MESSAGE("%s | %08X", "ebx", info->ContextRecord->Ebx);
@@ -46,26 +34,11 @@ namespace CobbPatches {
          _MESSAGE("%s | %08X", "edi", info->ContextRecord->Edi);
          _MESSAGE("%s | %08X", "esi", info->ContextRecord->Esi);
          _MESSAGE("%s | %08X", "ebp", info->ContextRecord->Ebp);
-         {  // Print stack
-            _MESSAGE("\nSTACK (esp == %08X):", info->ContextRecord->Esp);
-            UInt32* esp = (UInt32*) info->ContextRecord->Esp;
-            UInt32 i = 0;
-            do {
-               UInt32  p     = esp[i];
-               auto    label = Subroutines::GetLabel(p);
-               if (!label)
-                  _MESSAGE("0x%08X |", p);
-               else {
-                  if (label->type == Label::kType_VTBL)
-                     _MESSAGE("0x%08X | VTBL:%s", p, label->name);
-                  else
-                     _MESSAGE("0x%08X | %s", p, label->name);
-               }
-            } while (++i < ce_printStackCount);
-         }
+         UInt32* esp = (UInt32*)info->ContextRecord->Esp;
          _MESSAGE("\n");
-         StackWalk(info);
-        _MESSAGE("\n");
+         for (unsigned int i = 0; i < ce_printStackCount; i+=4) {
+             _MESSAGE("0x%08X | 0x%08X | 0x%08X | 0x%08X", esp[i], esp[i+1], esp[i+2], esp[i+3]);
+         }
         constexpr int LOAD_COUNT = 140;
         HANDLE  processHandle = GetCurrentProcess();
         HMODULE modules[LOAD_COUNT];
