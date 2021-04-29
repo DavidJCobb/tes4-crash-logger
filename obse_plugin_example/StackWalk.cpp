@@ -1,16 +1,13 @@
 #include "StackWalk.h"
 
 #pragma comment(lib, "dbghelp")
-void StackWalk(EXCEPTION_POINTERS* info) {
+void StackWalk(EXCEPTION_POINTERS* info, HANDLE process, HANDLE thread) {
     DWORD machine = IMAGE_FILE_MACHINE_I386;
-
-    HANDLE process  = GetCurrentProcess();
-    HANDLE thread   = GetCurrentThread();
     CONTEXT context = {};
     memcpy(&context, info->ContextRecord, sizeof(CONTEXT));
     SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS | SYMOPT_UNDNAME | SYMOPT_ALLOW_ABSOLUTE_SYMBOLS);
     SymSetExtendedOption((IMAGEHLP_EXTENDED_OPTIONS)SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
-    if (SymInitialize(process, NULL, TRUE) != TRUE) {
+    if (SymInitialize(process, NULL, FALSE) != TRUE) {
         _MESSAGE("Error initializing symbol store");
     }
     SymSetExtendedOption((IMAGEHLP_EXTENDED_OPTIONS)SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
@@ -22,7 +19,19 @@ void StackWalk(EXCEPTION_POINTERS* info) {
     frame.AddrFrame.Mode   = AddrModeFlat;
     frame.AddrStack.Offset = info->ContextRecord->Esp;
     frame.AddrStack.Mode   = AddrModeFlat;
+    DWORD eip = 0;
     while (StackWalk(machine, process, thread, &frame, &context , NULL, SymFunctionTableAccess, SymGetModuleBase, NULL)) {
+        /*
+    Using  a PDB for OBSE from VS2019 is causing the frame to repeat, but apparently only if WINEDEBUG=+dbghelp isn't setted. Is this a wine issue?
+    When this happen winedbg show only the first line (this happens with the first frame only probably, even if there are more frames shown when using WINEDEBUG=+dbghelp )
+        */
+        if (frame.AddrPC.Offset == eip) break;
+        eip = frame.AddrPC.Offset;
+        char path[MAX_PATH];
+        if (GetModuleFileName((HMODULE)frame.AddrPC.Offset, path, MAX_PATH)) {  //Do this work on non base addresses even on  Windows? Cal directly the LDR function?
+            if (!SymLoadModule(process, NULL, path, NULL, 0, 0)) _MESSAGE("Porcoddio %0X", GetLastError());
+        }
+
         std::string functioName;
         char symbolBuffer[sizeof(PSYMBOL_INFO) + 255];
         PSYMBOL_INFO symbol = (PSYMBOL_INFO)symbolBuffer;

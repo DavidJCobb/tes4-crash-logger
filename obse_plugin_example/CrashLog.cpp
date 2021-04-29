@@ -20,9 +20,11 @@ namespace CobbPatches {
       static LPTOP_LEVEL_EXCEPTION_FILTER s_originalFilter = nullptr;
 
       void Log(EXCEPTION_POINTERS* info) {
+          HANDLE  processHandle = GetCurrentProcess();
+          HANDLE  threadHandle = GetCurrentThread();
           _MESSAGE("Exception %08X caught!", info->ExceptionRecord->ExceptionCode);
           _MESSAGE("\nCalltrace: ");
-          StackWalk(info);
+          StackWalk(info, processHandle, threadHandle);
 
           UInt32 eip = info->ContextRecord->Eip;
          _MESSAGE("\nInstruction pointer (EIP): %08X", eip);
@@ -35,12 +37,11 @@ namespace CobbPatches {
          _MESSAGE("%s | %08X", "esi", info->ContextRecord->Esi);
          _MESSAGE("%s | %08X", "ebp", info->ContextRecord->Ebp);
          UInt32* esp = (UInt32*)info->ContextRecord->Esp;
-         _MESSAGE("\n");
          for (unsigned int i = 0; i < ce_printStackCount; i+=4) {
              _MESSAGE("0x%08X | 0x%08X | 0x%08X | 0x%08X", esp[i], esp[i+1], esp[i+2], esp[i+3]);
          }
+         _MESSAGE("\n");
         constexpr int LOAD_COUNT = 140;
-        HANDLE  processHandle = GetCurrentProcess();
         HMODULE modules[LOAD_COUNT];
         DWORD   bytesNeeded;
         bool    success = EnumProcessModules(processHandle, modules, sizeof(modules), &bytesNeeded);
