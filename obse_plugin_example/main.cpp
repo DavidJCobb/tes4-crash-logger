@@ -1,9 +1,9 @@
 #include "obse/PluginAPI.h"
 #include "obse/CommandTable.h"
 
-#include "Patches/CrashLog.h"
+#include "CrashLog.h"
 
-IDebugLog    gLog("Data\\OBSE\\Plugins\\CobbCrashLogger.log");
+IDebugLog    gLog("CobbCrashLogger.log");
 PluginHandle g_pluginHandle = kPluginHandle_Invalid;
 
 extern "C" {
@@ -11,7 +11,7 @@ extern "C" {
       // fill out the info structure
       info->infoVersion = PluginInfo::kInfoVersion;
       info->name        = "CobbCrashLogger";
-      info->version     = 0x02000000; // major, minor, patch, build
+      info->version     = 0x03000000; // major, minor, patch, build
 
       {  // log our version number -- be helpful!
          auto v = info->version;

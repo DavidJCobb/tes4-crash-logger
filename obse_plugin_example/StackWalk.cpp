@@ -7,16 +7,14 @@ void StackWalk(EXCEPTION_POINTERS* info) {
     HANDLE process  = GetCurrentProcess();
     HANDLE thread   = GetCurrentThread();
     CONTEXT context = {};
-    context.ContextFlags = CONTEXT_FULL;
-    RtlCaptureContext(&context);
-    context.Eip = info->ContextRecord->Eip;
-    context.Ebp = info->ContextRecord->Ebp;
-    context.Esp = info->ContextRecord->Esp;
-    //TODO others? Or memset?
+    memcpy(&context, info->ContextRecord, sizeof(CONTEXT));
     SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS | SYMOPT_UNDNAME | SYMOPT_ALLOW_ABSOLUTE_SYMBOLS);
+    SymSetExtendedOption((IMAGEHLP_EXTENDED_OPTIONS)SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
     if (SymInitialize(process, NULL, TRUE) != TRUE) {
         _MESSAGE("Error initializing symbol store");
     }
+    SymSetExtendedOption((IMAGEHLP_EXTENDED_OPTIONS)SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
+
     STACKFRAME frame = {};
     frame.AddrPC.Offset    = info->ContextRecord->Eip;
     frame.AddrPC.Mode      = AddrModeFlat;
@@ -31,21 +29,16 @@ void StackWalk(EXCEPTION_POINTERS* info) {
         symbol->SizeOfStruct = sizeof(PSYMBOL_INFO);
         symbol->MaxNameLen = 254;
         DWORD64  offset = 0;
-        char moduleBuff[MAX_PATH];
+        IMAGEHLP_MODULE module = { 0 };
+        module.SizeOfStruct = sizeof(IMAGEHLP_MODULE);
         if (SymFromAddr(process, frame.AddrPC.Offset, &offset, symbol)) {
             functioName = symbol->Name;
-            if (!(symbol->ModBase && GetModuleFileNameA((HINSTANCE)symbol->ModBase, moduleBuff, MAX_PATH))) {
-                strcpy_s(moduleBuff, "No Module");
+            if (!SymGetModuleInfo(process, frame.AddrPC.Offset, &module)) {
+                _MESSAGE("0x%08X ==> %s+0x%0X in No Module (0x%08X) ", frame.AddrPC.Offset, functioName.c_str(), (DWORD)offset, frame.AddrFrame.Offset);
             }
-            _MESSAGE("0x%08X ==> %s  (%s) (0x%08X) ", frame.AddrPC.Offset, functioName.c_str(), moduleBuff, frame.AddrFrame.Offset);
-
-//            IMAGEHLP_LINE line = { 0 };
-//            line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
-//            if (SymGetLineFromAddr(process, frame.AddrPC.Offset, 0, &line)) {
-//                _MESSAGE("0x%08X ==> %s  (%s) (0x%08X) ", frame.AddrPC.Offset, functioName.c_str(), moduleBuff, 0);
- //           }
- //           else {
-//            }
+            else {
+                _MESSAGE("0x%08X ==> %s+0x%0X in %s (0x%08X) ", frame.AddrPC.Offset, functioName.c_str(), (DWORD)offset, module.ModuleName, frame.AddrFrame.Offset);
+            }
         }
         else {
             _MESSAGE("0x%08X ==> ¯\\(°_o)/¯ (Corrupt stack or heap?)  (0x%08X)", frame.AddrPC.Offset, frame.AddrFrame.Offset);

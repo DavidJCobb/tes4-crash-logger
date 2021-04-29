@@ -128,7 +128,7 @@
   <ItemGroup>
     <ClCompile Include="..\OBSE\obse\obse_common\SafeWrite.cpp" />
     <ClCompile Include="definitions.cpp" />
-    <ClCompile Include="Patches\CrashLog.cpp" />
+    <ClCompile Include="CrashLog.cpp" />
     <ClCompile Include="dllmain.c">
       <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
       </ForcedIncludeFiles>
@@ -141,7 +141,7 @@
   <ItemGroup>
     <ClInclude Include="..\OBSE\obse\obse_common\SafeWrite.h" />
     <ClInclude Include="definitions.h" />
-    <ClInclude Include="Patches\CrashLog.h" />
+    <ClInclude Include="CrashLog.h" />
     <ClInclude Include="StackWalk.h" />
   </ItemGroup>
   <ItemGroup>

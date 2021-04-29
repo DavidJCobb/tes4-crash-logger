@@ -8,7 +8,7 @@
   <ItemGroup>
     <ClCompile Include="dllmain.c" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Patches\CrashLog.cpp" />
+    <ClCompile Include="CrashLog.cpp" />
     <ClCompile Include="definitions.cpp" />
     <ClCompile Include="..\OBSE\obse\obse_common\SafeWrite.cpp">
       <Filter>OBSE</Filter>
@@ -16,7 +16,7 @@
     <ClCompile Include="StackWalk.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Patches\CrashLog.h" />
+    <ClInclude Include="CrashLog.h" />
     <ClInclude Include="definitions.h" />
     <ClInclude Include="..\OBSE\obse\obse_common\SafeWrite.h">
       <Filter>OBSE</Filter>
