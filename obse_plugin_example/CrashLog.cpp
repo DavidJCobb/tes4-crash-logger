@@ -123,13 +123,14 @@ namespace CobbPatches {
          return nullptr;
       }
       //
-      void Apply() {
+      void Apply(bool IsNewVegas) {
          s_originalFilter = SetUnhandledExceptionFilter(&Filter);
          //
-         // Prevent Oblivion from disabling the filter:
+         // Prevent disabling the filter:
          //
-         SafeWrite32(0x00A281B4, (UInt32)&FakeSetUnhandledExceptionFilter);
-
+         if(IsNewVegas) SafeWrite32(0x00FDF180, (UInt32)&FakeSetUnhandledExceptionFilter);
+         else SafeWrite32(0x00A281B4, (UInt32)&FakeSetUnhandledExceptionFilter);
+         
       };
    };
 };

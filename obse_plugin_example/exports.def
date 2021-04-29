@@ -2,3 +2,5 @@ LIBRARY	"CobbCrashLogger"
 EXPORTS
 OBSEPlugin_Query
 OBSEPlugin_Load
+NVSEPlugin_Query
+NVSEPlugin_Load
