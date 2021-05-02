@@ -30,9 +30,7 @@ namespace CobbPatches {
           if (info->eip >= (UInt32)moduleBase && info->eip <= (UInt32)moduleBase + (UInt32)moduleSize) {
               //_MESSAGE("%0X %0X  %0X", (UInt32)moduleBase, info->eip, (UInt32)moduleBase + (UInt32) moduleSize);
               info->moduleBase = moduleBase;
-              UInt32 len = strlen(name);
-              info->name = (char*)calloc(1, len);
-              strcpy_s(info->name, len, name);
+              strcpy_s(info->name, 100, name);
           }
           _MESSAGE(" - 0x%08X - 0x%08X: %s", (UInt32)moduleBase, (UInt32)moduleBase + (UInt32)moduleSize, name);
           return TRUE;
@@ -45,9 +43,7 @@ namespace CobbPatches {
           if (info->eip >= (UInt32) moduleBase && info->eip <= (UInt32)moduleBase + modu.ImageSize) {
   //            _MESSAGE("%0X %0X  %0X", (UInt32)moduleBase, info->eip, (UInt32)moduleBase + moduleSize);
               info->moduleBase = moduleBase;
-              UInt32 len = strlen(name);
-              info->name = (char*)calloc(1, len);
-              strcpy_s(info->name, len,  name);
+              strcpy_s(info->name, 100,  name);
           }
           _MESSAGE(" - 0x%08X - 0x%08X: %s", (UInt32)moduleBase, (UInt32)moduleBase + modu.ImageSize, name);
           return TRUE;
@@ -75,7 +71,7 @@ namespace CobbPatches {
              _MESSAGE("0x%08X | 0x%08X | 0x%08X | 0x%08X", esp[i], esp[i+1], esp[i+2], esp[i+3]);
          }
          _MESSAGE("\nLISTING MODULE BASES ...");
-         UserContext infoUser = { eip, 0 , NULL};
+         UserContext infoUser = { eip,  0, (char*)calloc(sizeof(char), 100)};
          EnumerateLoadedModules(processHandle, EumerateModulesCallback, &infoUser);
 //        SymEnumerateModules(processHandle, EumerateModulesCallbackSym, &infoUser);
          if (infoUser.moduleBase) {
