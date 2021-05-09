@@ -1,9 +1,9 @@
 #include "obse/PluginAPI.h"
 #include "obse/CommandTable.h"
 
-#include "Patches/CrashLog.h"
+#include "CrashLog.h"
 
-IDebugLog    gLog("Data\\OBSE\\Plugins\\CobbCrashLogger.log");
+IDebugLog    gLog("CobbCrashLogger.log");
 PluginHandle g_pluginHandle = kPluginHandle_Invalid;
 
 extern "C" {
@@ -11,7 +11,7 @@ extern "C" {
       // fill out the info structure
       info->infoVersion = PluginInfo::kInfoVersion;
       info->name        = "CobbCrashLogger";
-      info->version     = 0x02000000; // major, minor, patch, build
+      info->version     = 0x03000000; // major, minor, patch, build
 
       {  // log our version number -- be helpful!
          auto v = info->version;
@@ -25,16 +25,14 @@ extern "C" {
 
       // version checks
       if(!obse->isEditor) {
-         if(obse->obseVersion < OBSE_VERSION_INTEGER && obse->obseVersion < 21) {
-            _ERROR("OBSE version too old (got %08X; expected at least %08X).", obse->obseVersion, OBSE_VERSION_INTEGER);
+         if(obse->obseVersion < 21) {
+            _ERROR("OBSE version too old (got %08X; expected at least %08X).", obse->obseVersion, 21);
             return false;
          }
-         #if OBLIVION
-            if(obse->oblivionVersion != OBLIVION_VERSION) {
-               _ERROR("incorrect Oblivion version (got %08X; need %08X).", obse->oblivionVersion, OBLIVION_VERSION);
-               return false;
-            }
-         #endif
+         if(obse->oblivionVersion != OBLIVION_VERSION_1_2_416) {
+             _ERROR("incorrect Oblivion version (got %08X; need %08X).", obse->oblivionVersion, OBLIVION_VERSION_1_2_416);
+             return false;
+         }
       } else {
          // no version checks needed for editor
       }
@@ -46,7 +44,50 @@ extern "C" {
       g_pluginHandle = obse->GetPluginHandle();
       //
       if (!obse->isEditor)
-         CobbPatches::CrashLog::Apply();
+         CobbPatches::CrashLog::Apply(false);
       return true;
+   }
+
+
+   bool NVSEPlugin_Query(const OBSEInterface* obse, PluginInfo* info) {
+       // fill out the info structure
+       info->infoVersion = PluginInfo::kInfoVersion;
+       info->name = "CobbCrashLogger";
+       info->version = 0x03000000; // major, minor, patch, build
+
+       {  // log our version number -- be helpful!
+           auto v = info->version;
+           UInt8 major = v >> 0x18;
+           UInt8 minor = (v >> 0x10) & 0xFF;
+           UInt8 patch = (v >> 0x08) & 0xFF;
+           UInt8 build = v & 0xFF;
+           _MESSAGE("Cobb Crash Logger Version %d.%d.%d, build %d.", major, minor, patch, build);
+           _MESSAGE("If this file is empty, then your game didn't crash! Probably!\n");
+       }
+
+       // version checks
+       if (!obse->isEditor) {
+           if (obse->obseVersion < 6) {
+               _ERROR("NVSE version too old (got %08X; expected at least %08X).", obse->obseVersion, 6);
+               return false;
+           }
+           if (obse->oblivionVersion != 0x040020D0) {
+               _ERROR("incorrect Fallout New Vegas version (got %08X; need %08X).", obse->oblivionVersion, 0x040020D0);
+               return false;
+           }
+       }
+       else {
+           // no version checks needed for editor
+       }
+       // version checks pass
+       return true;
+   }
+
+   bool NVSEPlugin_Load(const OBSEInterface* obse) {
+       g_pluginHandle = obse->GetPluginHandle();
+       //
+       if (!obse->isEditor)
+           CobbPatches::CrashLog::Apply(true);
+       return true;
    }
 };
