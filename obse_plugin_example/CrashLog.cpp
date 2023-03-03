@@ -111,14 +111,21 @@ namespace CobbPatches {
          return nullptr;
       }
       //
-      void Apply(bool IsNewVegas) {
+      void Apply(int gameID) {
          s_originalFilter = SetUnhandledExceptionFilter(&Filter);
-         //
-         // Prevent disabling the filter:
-         //
-         if(IsNewVegas) SafeWrite32(0x00FDF180, (UInt32)&FakeSetUnhandledExceptionFilter);
-         else SafeWrite32(0x00A281B4, (UInt32)&FakeSetUnhandledExceptionFilter);
-         
+
+         // prevent disabling the filter
+         switch (gameID) {
+         case 'OBSE': 
+             SafeWrite32(0x00A281B4, (UInt32)&FakeSetUnhandledExceptionFilter);
+             break;
+         case 'NVSE':
+             SafeWrite32(0x00FDF180, (UInt32)&FakeSetUnhandledExceptionFilter);
+             break;
+         case 'FOSE':
+             SafeWrite32(0x00D9B180, (UInt32)&FakeSetUnhandledExceptionFilter);
+             break;
+         }
       };
    };
 };
