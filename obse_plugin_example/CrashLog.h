@@ -2,6 +2,6 @@
 
 namespace CobbPatches {
    namespace CrashLog {
-      void Apply(bool isNewVegas);
+      void Apply(int gameID);
    };
 };
